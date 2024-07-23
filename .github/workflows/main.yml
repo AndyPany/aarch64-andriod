@@ -1,0 +1,65 @@
+name: Build and Release Caddy and Rclone for Android
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.16' # specify the Go version
+
+    # Build Caddy for Android
+    - name: Build Caddy
+      run: |
+        export GOOS=android
+        export GOARCH=arm
+        go build -o caddy-android ./cmd/caddy
+
+    # Build Rclone for Android
+    - name: Build Rclone
+      run: |
+        export GOOS=android
+        export GOARCH=arm
+        go build -o rclone-android ./cmd/rclone
+
+    # Create a new release
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release Caddy and Rclone for Android
+        draft: false
+        prerelease: false
+
+    # Upload Caddy binary
+    - name: Upload Caddy Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./caddy-android
+        asset_name: caddy-android
+        asset_content_type: application/octet-stream
+
+    # Upload Rclone binary
+    - name: Upload Rclone Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./rclone-android
+        asset_name: rclone-android
+        asset_content_type: application/octet-stream
