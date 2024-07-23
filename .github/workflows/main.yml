@@ -23,12 +23,20 @@ jobs:
         export GOARCH=arm
         go build -o caddy-android ./cmd/caddy
 
+    # Check if Caddy binary exists
+    - name: Check if Caddy binary exists
+      run: ls -l ./caddy-android
+
     # Build Rclone for Android
     - name: Build Rclone
       run: |
         export GOOS=android
         export GOARCH=arm
         go build -o rclone-android ./cmd/rclone
+
+    # Check if Rclone binary exists
+    - name: Check if Rclone binary exists
+      run: ls -l ./rclone-android
 
     # Create a new release
     - name: Create Release
@@ -41,6 +49,10 @@ jobs:
         release_name: Release Caddy and Rclone for Android
         draft: false
         prerelease: false
+
+    # Check if release was created
+    - name: Check if release was created
+      run: echo "Release URL: ${{ steps.create_release.outputs.html_url }}"
 
     # Upload Caddy binary
     - name: Upload Caddy Binary
