@@ -1,0 +1,56 @@
+name: Build and Release fusermount3 for Android 12 (64-bit)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v2
+      with:
+        api-level: 31
+        ndk-version: '21.4.7075529'
+
+    - name: Download fusermount3 source code
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git
+        git clone https://github.com/libfuse/libfuse.git
+        cd libfuse
+        git checkout fuse-3.x
+
+    - name: Build fusermount3
+      run: |
+        cd libfuse
+        ./configure --host=aarch64-linux-android
+        make
+
+    - name: Create release directory
+      run: mkdir -p release
+
+    - name: Move compiled binary
+      run: |
+        cp libfuse/build/bin/fusermount3 ./release
+
+    - name: Upload to GitHub Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: release/*
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref }}
+        release_name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
